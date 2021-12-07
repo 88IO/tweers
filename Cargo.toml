@@ -1,0 +1,17 @@
+[package]
+name = "blogpost-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = "0.9"
+base64 = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
+chrono = "*"
+percent-encoding = "*"
+hmac-sha1 = "*"
+dotenv = "*"
