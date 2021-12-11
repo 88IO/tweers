@@ -22,10 +22,19 @@ fn main() {
     );
 
     let mut params = HashMap::new();
-    params.insert("status", "別の実装で投稿");
+    params.insert("text", "Twitter API v2対応");
 
-    let res = twitter.post("statuses/update", params);
+    let res = twitter.post("tweets", params);
     println!("{:?}", res);
+
+    let id = res["data"]["id"].as_str().unwrap();
+    println!("https://twitter.com/scienceboy_jp/status/{}", id);
+
+    let res = twitter.delete(&format!("tweets/{}", id), HashMap::new());
+    println!("{:?}", res);
+
+    //let res = twitter.post(&format!("statuses/destory/{}", res["id"].as_str().unwrap()), HashMap::new());
+    //println!("{:?}", res);
 
     //let res = twitter.destroy_status(&res.id_str);
     //println!("{}/status/{}", twitter_url, res.id_str);

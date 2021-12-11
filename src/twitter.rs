@@ -1,18 +1,13 @@
-use reqwest;
 use base64;
 use chrono::Utc;
-use reqwest::header::{HeaderMap, AUTHORIZATION};
+use reqwest;
+use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 use percent_encoding::{utf8_percent_encode, AsciiSet};
 use std::collections::HashMap;
-use serde_derive::Deserialize;
 use serde_json::Value;
 
 // レスポンスで必要な部分だけ記述
 // これを戻り値にせずserde_json::Valueで全部取得してもよい
-#[derive(Deserialize, Debug)]
-struct Response {
-    id_str: String
-}
 
 // Twitterの認証関連と一部ラッパー実装
 pub struct Twitter {
@@ -24,8 +19,7 @@ pub struct Twitter {
 
 impl Twitter {
     // エンコードルール
-    const FRAGMENT: AsciiSet = percent_encoding::NON_ALPHANUMERIC
-        .remove(b'*')
+    const FRAGMENT: AsciiSet = percent_encoding::NON_ALPHANUMERIC .remove(b'*')
         .remove(b'-')
         .remove(b'.')
         .remove(b'_');
@@ -44,8 +38,7 @@ impl Twitter {
     }
 
     // ヘッダー生成
-    fn get_request_header(&self, method: &str, endpoint: &str, params: &HashMap<&str, &str>) -> String {
-
+    fn get_request_header(&self, method: &str, endpoint: &str) -> String {
         let nonce = format!("nonce{}", Utc::now().timestamp());
         let timestamp = format!("{}", Utc::now().timestamp());
         // oauth_*パラメータ
@@ -57,19 +50,14 @@ impl Twitter {
         oauth_params.insert("oauth_token", &self.access_token_key);
         oauth_params.insert("oauth_version", "1.0");
 
-        // 他パラメータと結合
-        let mut all_params: HashMap<&str, &str> = HashMap::new();
-        all_params.clone_from(&oauth_params);
-        all_params.extend(params.into_iter());
-
         // シグネチャを計算
-        let oauth_signature: &str = &self.get_oauth_signature(
+        let oauth_signature = self.get_oauth_signature(
             method, endpoint,
             &self.consummer_secret, &self.access_token_secret,
-            &all_params);
+            &oauth_params);
 
         // シグネチャをoauth_*パラメータに追加
-        oauth_params.insert("oauth_signature", oauth_signature);
+        oauth_params.insert("oauth_signature", &oauth_signature);
 
         // ヘッダを返す
         format!(
@@ -90,17 +78,17 @@ impl Twitter {
     fn get_oauth_signature(
         &self, method: &str, endpoint: &str,
         consummer_secret: &str, access_token_secret: &str,
-        params: &HashMap<&str, &str>
+        oauth_params: &HashMap<&str, &str>
         ) -> String {
 
         let key: String = format!("{}&{}",
                                   utf8_percent_encode(consummer_secret, &Self::FRAGMENT),
                                   utf8_percent_encode(access_token_secret, &Self::FRAGMENT));
 
-        let mut params: Vec<(&&str, &&str)> = params.into_iter().collect();
-        params.sort();
+        let mut oauth_params: Vec<(&&str, &&str)> = oauth_params.into_iter().collect();
+        oauth_params.sort();
 
-        let param = params
+        let oauth_param = oauth_params
             .into_iter()
             .map(|(key, value)| {
                 format!("{}={}",
@@ -113,75 +101,90 @@ impl Twitter {
         let data = format!("{}&{}&{}",
                            utf8_percent_encode(method, &Self::FRAGMENT),
                            utf8_percent_encode(endpoint, &Self::FRAGMENT),
-                           utf8_percent_encode(&param, &Self::FRAGMENT));
+                           utf8_percent_encode(&oauth_param, &Self::FRAGMENT));
 
         let hash = hmacsha1::hmac_sha1(key.as_bytes(), data.as_bytes());
 
         base64::encode(&hash)
     }
 
+    #[allow(dead_code)]
+    pub fn get(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+        let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
+
+        let header_auth = self.get_request_header("GET", &endpoint);
+
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+
+        reqwest::blocking::Client::new()
+            .get(&endpoint)
+            .headers(headers)
+            .json(&params)
+            .send()
+            .unwrap()
+            .json::<Value>()
+            .unwrap()
+    }
+
+    #[allow(dead_code)]
+    pub fn put(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+        let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
+
+        let header_auth = self.get_request_header("PUT", &endpoint);
+
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
+
+        reqwest::blocking::Client::new()
+            .put(&endpoint)
+            .headers(headers)
+            .json(&params)
+            .send()
+            .unwrap()
+            .json::<Value>()
+            .unwrap()
+    }
+
+    #[allow(dead_code)]
     pub fn post(&self, path: &str, params: HashMap<&str, &str>) -> Value {
-        let endpoint = &format!("https://api.twitter.com/1.1/{}.json", path);
+        let endpoint = format!("https://api.twitter.com/2/{}", path);
 
-        let header_auth = self.get_request_header("POST", &endpoint, &params);
+        let header_auth = self.get_request_header("POST", &endpoint);
 
         let mut headers = HeaderMap::new();
         headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        reqwest::Client::new()
-            .post(endpoint)
-            .query(&params)
+        reqwest::blocking::Client::new()
+            .post(&endpoint)
             .headers(headers)
+            .json(&params)
             .send()
             .unwrap()
             .json::<Value>()
             .unwrap()
     }
 
-    // ツイート
-    pub fn update_status(&self, status: &str) -> Value  {
+    #[allow(dead_code)]
+    pub fn delete(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+        let endpoint = format!("https://api.twitter.com/2/{}", path);
+
+        let header_auth = self.get_request_header("DELETE", &endpoint);
+
         let mut headers = HeaderMap::new();
-
-        let endpoint = "https://api.twitter.com/1.1/statuses/update.json";
-
-        let mut params: HashMap<&str, &str> = HashMap::new();
-        params.insert("status", status);
-
-        let header_auth = self.get_request_header("POST", &endpoint, &params);
-
         headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
+        headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        let client = reqwest::Client::new();
-
-        client
-            .post(endpoint)
-            .query(&params)
+        reqwest::blocking::Client::new()
+            .delete(&endpoint)
             .headers(headers)
+            .json(&params)
             .send()
             .unwrap()
             .json::<Value>()
-            .unwrap()
-    }
-
-    // ツイート削除
-    pub fn destroy_status(&self, id: &str) -> Response {
-        let endpoint = &format!("https://api.twitter.com/1.1/statuses/destroy/{}.json", id);
-
-        let params: HashMap<&str, &str> = HashMap::new();
-
-        let header_auth = self.get_request_header("POST", &endpoint, &params);
-
-        let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
-
-        let client = reqwest::Client::new();
-
-        client
-            .post(endpoint)
-            .headers(headers)
-            .send()
-            .unwrap()
-            .json::<Response>()
             .unwrap()
     }
 }
