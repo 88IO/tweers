@@ -19,7 +19,8 @@ pub struct Twitter {
 
 impl Twitter {
     // エンコードルール
-    const FRAGMENT: AsciiSet = percent_encoding::NON_ALPHANUMERIC .remove(b'*')
+    const FRAGMENT: AsciiSet = percent_encoding::NON_ALPHANUMERIC
+        .remove(b'*')
         .remove(b'-')
         .remove(b'.')
         .remove(b'_');
@@ -30,10 +31,10 @@ impl Twitter {
         access_token_key: String, access_token_secret: String)
         -> Twitter {
         Twitter {
-            consummer_key: consummer_key,
-            consummer_secret: consummer_secret,
-            access_token_key: access_token_key,
-            access_token_secret: access_token_secret
+            consummer_key,
+            consummer_secret,
+            access_token_key,
+            access_token_secret
         }
     }
 
@@ -78,17 +79,17 @@ impl Twitter {
     fn get_oauth_signature(
         &self, method: &str, endpoint: &str,
         consummer_secret: &str, access_token_secret: &str,
-        oauth_params: &HashMap<&str, &str>
+        params: &HashMap<&str, &str>
         ) -> String {
 
         let key: String = format!("{}&{}",
                                   utf8_percent_encode(consummer_secret, &Self::FRAGMENT),
                                   utf8_percent_encode(access_token_secret, &Self::FRAGMENT));
 
-        let mut oauth_params: Vec<(&&str, &&str)> = oauth_params.into_iter().collect();
-        oauth_params.sort();
+        let mut params: Vec<(&&str, &&str)> = params.into_iter().collect();
+        params.sort();
 
-        let oauth_param = oauth_params
+        let param_string = params
             .into_iter()
             .map(|(key, value)| {
                 format!("{}={}",
@@ -101,7 +102,7 @@ impl Twitter {
         let data = format!("{}&{}&{}",
                            utf8_percent_encode(method, &Self::FRAGMENT),
                            utf8_percent_encode(endpoint, &Self::FRAGMENT),
-                           utf8_percent_encode(&oauth_param, &Self::FRAGMENT));
+                           utf8_percent_encode(&param_string, &Self::FRAGMENT));
 
         let hash = hmacsha1::hmac_sha1(key.as_bytes(), data.as_bytes());
 
@@ -109,7 +110,7 @@ impl Twitter {
     }
 
     #[allow(dead_code)]
-    pub fn get(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+    pub fn get(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
 
         let header_auth = self.get_request_header("GET", &endpoint);
@@ -125,11 +126,10 @@ impl Twitter {
             .send()
             .unwrap()
             .json::<Value>()
-            .unwrap()
     }
 
     #[allow(dead_code)]
-    pub fn put(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+    pub fn put(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
 
         let header_auth = self.get_request_header("PUT", &endpoint);
@@ -145,11 +145,10 @@ impl Twitter {
             .send()
             .unwrap()
             .json::<Value>()
-            .unwrap()
     }
 
     #[allow(dead_code)]
-    pub fn post(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+    pub fn post(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/2/{}", path);
 
         let header_auth = self.get_request_header("POST", &endpoint);
@@ -165,11 +164,10 @@ impl Twitter {
             .send()
             .unwrap()
             .json::<Value>()
-            .unwrap()
     }
 
     #[allow(dead_code)]
-    pub fn delete(&self, path: &str, params: HashMap<&str, &str>) -> Value {
+    pub fn delete(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/2/{}", path);
 
         let header_auth = self.get_request_header("DELETE", &endpoint);
@@ -185,6 +183,5 @@ impl Twitter {
             .send()
             .unwrap()
             .json::<Value>()
-            .unwrap()
     }
 }

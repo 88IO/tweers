@@ -24,13 +24,13 @@ fn main() {
     let mut params = HashMap::new();
     params.insert("text", "Twitter API v2対応");
 
-    let res = twitter.post("tweets", params);
+    let res = twitter.post("tweets", params).unwrap();
     println!("{:?}", res);
 
     let id = res["data"]["id"].as_str().unwrap();
     println!("https://twitter.com/scienceboy_jp/status/{}", id);
 
-    let res = twitter.delete(&format!("tweets/{}", id), HashMap::new());
+    let res = twitter.delete(&format!("tweets/{}", id), HashMap::new()).unwrap();
     println!("{:?}", res);
 
     //let res = twitter.post(&format!("statuses/destory/{}", res["id"].as_str().unwrap()), HashMap::new());
