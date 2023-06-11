@@ -1,15 +1,15 @@
 use base64;
 use chrono::Utc;
 use reqwest;
+use std::collections::BTreeMap;
+use serde_json::Value;
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 use percent_encoding::{utf8_percent_encode, AsciiSet};
-use std::collections::HashMap;
-use serde_json::Value;
 
 // Twitterの認証関連と一部ラッパー実装
 pub struct Twitter {
-    consummer_key: String,
-    consummer_secret: String,
+    consumer_key: String,
+    consumer_secret: String,
     access_token_key: String,
     access_token_secret: String
 }
@@ -24,12 +24,12 @@ impl Twitter {
 
     // インスタンス生成
     pub fn new(
-        consummer_key: String, consummer_secret: String,
+        consumer_key: String, consumer_secret: String,
         access_token_key: String, access_token_secret: String)
         -> Twitter {
         Twitter {
-            consummer_key,
-            consummer_secret,
+            consumer_key,
+            consumer_secret,
             access_token_key,
             access_token_secret
         }
@@ -40,8 +40,8 @@ impl Twitter {
         let nonce = format!("nonce{}", Utc::now().timestamp());
         let timestamp = format!("{}", Utc::now().timestamp());
         // oauth_*パラメータ
-        let mut oauth_params: HashMap<&str, &str> = HashMap::new();
-        oauth_params.insert("oauth_consumer_key", &self.consummer_key);
+        let mut oauth_params: BTreeMap<&str, &str> = BTreeMap::new();
+        oauth_params.insert("oauth_consumer_key", &self.consumer_key);
         oauth_params.insert("oauth_nonce", &nonce);
         oauth_params.insert("oauth_signature_method", "HMAC-SHA1");
         oauth_params.insert("oauth_timestamp", &timestamp);
@@ -51,7 +51,7 @@ impl Twitter {
         // シグネチャを計算
         let oauth_signature = self.get_oauth_signature(
             method, endpoint,
-            &self.consummer_secret, &self.access_token_secret,
+            &self.consumer_secret, &self.access_token_secret,
             &oauth_params);
 
         // シグネチャをoauth_*パラメータに追加
@@ -75,19 +75,16 @@ impl Twitter {
     // シグネチャ生成
     fn get_oauth_signature(
         &self, method: &str, endpoint: &str,
-        consummer_secret: &str, access_token_secret: &str,
-        params: &HashMap<&str, &str>
+        consumer_secret: &str, access_token_secret: &str,
+        params: &BTreeMap<&str, &str>
         ) -> String {
 
         let key: String = format!("{}&{}",
-                                  utf8_percent_encode(consummer_secret, &Self::FRAGMENT),
+                                  utf8_percent_encode(consumer_secret, &Self::FRAGMENT),
                                   utf8_percent_encode(access_token_secret, &Self::FRAGMENT));
 
-        let mut params: Vec<(&&str, &&str)> = params.into_iter().collect();
-        params.sort();
-
         let param_string = params
-            .into_iter()
+            .iter()
             .map(|(key, value)| {
                 format!("{}={}",
                         utf8_percent_encode(key, &Self::FRAGMENT),
