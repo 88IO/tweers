@@ -6,9 +6,6 @@ use percent_encoding::{utf8_percent_encode, AsciiSet};
 use std::collections::HashMap;
 use serde_json::Value;
 
-// レスポンスで必要な部分だけ記述
-// これを戻り値にせずserde_json::Valueで全部取得してもよい
-
 // Twitterの認証関連と一部ラッパー実装
 pub struct Twitter {
     consummer_key: String,
@@ -109,8 +106,7 @@ impl Twitter {
         base64::encode(&hash)
     }
 
-    #[allow(dead_code)]
-    pub fn get(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
+    pub async fn get(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
 
         let header_auth = self.get_request_header("GET", &endpoint);
@@ -119,17 +115,17 @@ impl Twitter {
         headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        reqwest::blocking::Client::new()
+        reqwest::Client::new()
             .get(&endpoint)
             .headers(headers)
             .json(&params)
             .send()
-            .unwrap()
+            .await?
             .json::<Value>()
+            .await
     }
 
-    #[allow(dead_code)]
-    pub fn put(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
+    pub async fn put(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
 
         let header_auth = self.get_request_header("PUT", &endpoint);
@@ -138,17 +134,17 @@ impl Twitter {
         headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        reqwest::blocking::Client::new()
+        reqwest::Client::new()
             .put(&endpoint)
             .headers(headers)
             .json(&params)
             .send()
-            .unwrap()
+            .await?
             .json::<Value>()
+            .await
     }
 
-    #[allow(dead_code)]
-    pub fn post(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
+    pub async fn post(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/2/{}", path);
 
         let header_auth = self.get_request_header("POST", &endpoint);
@@ -157,17 +153,17 @@ impl Twitter {
         headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        reqwest::blocking::Client::new()
+        reqwest::Client::new()
             .post(&endpoint)
             .headers(headers)
             .json(&params)
             .send()
-            .unwrap()
+            .await?
             .json::<Value>()
+            .await
     }
 
-    #[allow(dead_code)]
-    pub fn delete(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
+    pub async fn delete(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/2/{}", path);
 
         let header_auth = self.get_request_header("DELETE", &endpoint);
@@ -176,12 +172,13 @@ impl Twitter {
         headers.insert(AUTHORIZATION, header_auth.parse().unwrap());
         headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-        reqwest::blocking::Client::new()
+        reqwest::Client::new()
             .delete(&endpoint)
             .headers(headers)
             .json(&params)
             .send()
-            .unwrap()
+            .await?
             .json::<Value>()
+            .await
     }
 }

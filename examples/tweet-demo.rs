@@ -1,10 +1,10 @@
+use tweers::Twitter;
 use dotenv::dotenv;
 use std::env;
 use std::collections::HashMap;
 
-mod twitter;
-
-fn main() {
+#[tokio::main]
+async fn main() {
     dotenv().ok();
 
     let consummer_key = env::var("CK").expect("CK must be set.");
@@ -12,9 +12,9 @@ fn main() {
     let access_token_key = env::var("AT").expect("AT must be set.");
     let access_token_secret = env::var("AS").expect("AS must be set.");
 
-    //let twitter_url = env::var("TWITTER_URL").expect("TWITTER_URL must be set.");
+    let twitter_url = env::var("TWITTER_URL").expect("TWITTER_URL must be set.");
 
-    let twitter = twitter::Twitter::new(
+    let twitter = Twitter::new(
         consummer_key,
         consummer_secret,
         access_token_key,
@@ -24,13 +24,13 @@ fn main() {
     let mut params = HashMap::new();
     params.insert("text", "Twitter API v2対応");
 
-    let res = twitter.post("tweets", params).unwrap();
+    let res = twitter.post("tweets", params).await.unwrap();
     println!("{:?}", res);
 
     let id = res["data"]["id"].as_str().unwrap();
-    println!("https://twitter.com/scienceboy_jp/status/{}", id);
+    println!("{}/status/{}", twitter_url, id);
 
-    let res = twitter.delete(&format!("tweets/{}", id), HashMap::new()).unwrap();
+    let res = twitter.delete(&format!("tweets/{}", id), HashMap::new()).await.unwrap();
     println!("{:?}", res);
 
     //let res = twitter.post(&format!("statuses/destory/{}", res["id"].as_str().unwrap()), HashMap::new());
