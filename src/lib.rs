@@ -1,12 +1,16 @@
+//! ## Tweers
+//! An easy-to-use Rust library for accessing the Twitter API.
+//!
+//! This library uses Twitter API v2 and OAuth 1.0a and provides REST APIs.
 use base64;
 use chrono::Utc;
 use reqwest;
-use std::collections::BTreeMap;
+use std::collections::{HashMap, BTreeMap};
 use serde_json::Value;
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 use percent_encoding::{utf8_percent_encode, AsciiSet};
 
-// Twitterの認証関連と一部ラッパー実装
+/// Structure that holds information such as Twitter access tokens
 pub struct Twitter {
     consumer_key: String,
     consumer_secret: String,
@@ -15,14 +19,19 @@ pub struct Twitter {
 }
 
 impl Twitter {
-    // エンコードルール
+    /// Encoding rules for RFC3986 percent encoding
     const FRAGMENT: AsciiSet = percent_encoding::NON_ALPHANUMERIC
         .remove(b'*')
         .remove(b'-')
         .remove(b'.')
         .remove(b'_');
 
-    // インスタンス生成
+    /// Constructor
+    ///
+    /// * `consumer_key` - Comsumer key
+    /// * `consumer_secret` - Comsumer secret
+    /// * `access_token_key - Access token
+    /// * `access_token_secret` - Access token secret
     pub fn new(
         consumer_key: String, consumer_secret: String,
         access_token_key: String, access_token_secret: String)
@@ -35,7 +44,10 @@ impl Twitter {
         }
     }
 
-    // ヘッダー生成
+    /// Generating request header
+    ///
+    /// * `method` - HTTP method, must be uppercase
+    /// * `endpoint` - request endpoint, see [here](https://developer.twitter.com/en/docs/twitter-api).
     fn get_request_header(&self, method: &str, endpoint: &str) -> String {
         let nonce = format!("nonce{}", Utc::now().timestamp());
         let timestamp = format!("{}", Utc::now().timestamp());
@@ -103,8 +115,12 @@ impl Twitter {
         base64::encode(&hash)
     }
 
+    /// REST API GET request.
+    ///
+    /// * `path` - path under /2/, see [here](https://developer.twitter.com/en/docs/twitter-api).
+    /// * `params` - json array of the request body
     pub async fn get(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
-        let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
+        let endpoint = format!("https://api.twitter.com/2/{}", path);
 
         let header_auth = self.get_request_header("GET", &endpoint);
 
@@ -122,8 +138,12 @@ impl Twitter {
             .await
     }
 
+    /// REST API PUT request.
+    ///
+    /// * `path` - path under /2/, see [here](https://developer.twitter.com/en/docs/twitter-api).
+    /// * `params` - json array of the request body
     pub async fn put(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
-        let endpoint = format!("https://api.twitter.com/1.1/{}.json", path);
+        let endpoint = format!("https://api.twitter.com/2/{}", path);
 
         let header_auth = self.get_request_header("PUT", &endpoint);
 
@@ -141,6 +161,10 @@ impl Twitter {
             .await
     }
 
+    /// REST API POST request.
+    ///
+    /// * `path` - path under /2/, see [here](https://developer.twitter.com/en/docs/twitter-api).
+    /// * `params` - json array of the request body
     pub async fn post(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/2/{}", path);
 
@@ -160,6 +184,10 @@ impl Twitter {
             .await
     }
 
+    /// REST API DELETE request.
+    ///
+    /// * `path` - path under /2/, see [here](https://developer.twitter.com/en/docs/twitter-api).
+    /// * `params` - json array of the request body
     pub async fn delete(&self, path: &str, params: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
         let endpoint = format!("https://api.twitter.com/2/{}", path);
 
