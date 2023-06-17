@@ -9,6 +9,7 @@ This library uses Twitter API v2 and OAuth 1.0a and provides REST APIs.
 - **rust-tls** : Use `rustls` as TLS backend
 
 ## Reference
+[https://88IO.github.io/tweers/tweers/](https://88IO.github.io/tweers/tweers/)
 
 ## Example
 This asynchronous example uses [Tokio](https://tokio.rs/) and [dotenv](https://crates.io/crates/dotenv), 
@@ -76,5 +77,5 @@ Licensed under either of
 - Apache License, Version 2.0 (LICENSE-APACHE or http://apache.org/licenses/LICENSE-2.0)
 - MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
 
-### Blog
+## Blog
 - [https://scienceboy.jp/88io/2022/01/rust-tweet/](https://scienceboy.jp/88io/2022/01/rust-tweet/)
