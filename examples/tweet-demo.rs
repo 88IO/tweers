@@ -7,15 +7,15 @@ use std::env;
 async fn main() {
     dotenv().ok();
 
-    let consummer_key = env::var("CK").expect("CK must be set.");
-    let consummer_secret = env::var("CS").expect("CS must be set.");
+    let consumer_key = env::var("CK").expect("CK must be set.");
+    let consumer_secret = env::var("CS").expect("CS must be set.");
     let access_token_key = env::var("AT").expect("AT must be set.");
     let access_token_secret = env::var("AS").expect("AS must be set.");
 
     let twitter_url = "https://twitter.com/scienceboy_jp";
 
     // initialize client
-    let mut twitter = tweers::Client::new(consummer_key, consummer_secret);
+    let mut twitter = tweers::Client::new(consumer_key, consumer_secret);
     twitter.set_access_token(access_token_key, access_token_secret);
 
     // create tweet
