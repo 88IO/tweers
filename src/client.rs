@@ -5,8 +5,7 @@
 use base64;
 use chrono::Utc;
 use reqwest;
-use std::collections::{HashMap, BTreeMap};
-use serde_json::Value;
+use std::collections::BTreeMap;
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
 use percent_encoding::{utf8_percent_encode, AsciiSet};
 
@@ -40,7 +39,7 @@ impl Client {
             bearer_token: None
         }
     }
-    
+
     /// set access token to use OAuth 1.0a
     /// * `access_token_key - Access token
     /// * `access_token_secret` - Access token secret
@@ -53,7 +52,7 @@ impl Client {
     ///
     /// * `method` - HTTP method, must be uppercase
     /// * `endpoint` - request endpoint, see [here](https://developer.twitter.com/en/docs/twitter-api).
-    fn generate_oauth1a_header(&self, method: &str, endpoint: &str) -> String {
+    pub fn generate_oauth1a_header(&self, method: &str, endpoint: &str) -> String {
         let nonce = format!("nonce{}", Utc::now().timestamp());
         let timestamp = format!("{}", Utc::now().timestamp());
         // oauth_*パラメータ
@@ -124,8 +123,7 @@ impl Client {
     ///
     /// * `method` - http method
     /// * `endpoint` - request path, see [here](https://developer.twitter.com/en/docs/twitter-api).
-    /// * `body` - json array of the request body
-    pub async fn request(&self, method: reqwest::Method, endpoint: &str, body: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
+    pub fn request(&self, method: reqwest::Method, endpoint: &str) -> reqwest::RequestBuilder {
         let header_auth = self.generate_oauth1a_header(method.as_str(), &endpoint);
 
         let mut headers = HeaderMap::new();
@@ -135,42 +133,33 @@ impl Client {
         reqwest::Client::new()
             .request(method, endpoint)
             .headers(headers)
-            .json(&body)
-            .send()
-            .await?
-            .json::<Value>()
-            .await
     }
 
     /// HTTP GET request.
     ///
     /// * `endpoint` - request path, see [here](https://developer.twitter.com/en/docs/twitter-api).
-    /// * `body` - json array of the request body
-    pub async fn get(&self, endpoint: &str, body: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
-        self.request(reqwest::Method::GET, endpoint, body).await
+    pub fn get(&self, endpoint: &str) -> reqwest::RequestBuilder {
+        self.request(reqwest::Method::GET, endpoint)
     }
 
     /// HTTP PUT request.
     ///
     /// * `endpoint` - request path, see [here](https://developer.twitter.com/en/docs/twitter-api).
-    /// * `body` - json array of the request body
-    pub async fn put(&self, endpoint: &str, body: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
-        self.request(reqwest::Method::PUT, endpoint, body).await
+    pub fn put(&self, endpoint: &str) -> reqwest::RequestBuilder {
+        self.request(reqwest::Method::PUT, endpoint)
     }
 
     /// HTTP POST request.
     ///
     /// * `endpoint` - request path, see [here](https://developer.twitter.com/en/docs/twitter-api).
-    /// * `body` - json array of the request body
-    pub async fn post(&self, endpoint: &str, body: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
-        self.request(reqwest::Method::POST, endpoint, body).await
+    pub fn post(&self, endpoint: &str) -> reqwest::RequestBuilder {
+        self.request(reqwest::Method::POST, endpoint)
     }
 
     /// HTTP DELETE request.
     ///
     /// * `endpoint` - request path, see [here](https://developer.twitter.com/en/docs/twitter-api).
-    /// * `body` - json array of the request body
-    pub async fn delete(&self, endpoint: &str, body: HashMap<&str, &str>) -> Result<Value, reqwest::Error> {
-        self.request(reqwest::Method::DELETE, endpoint, body).await
+    pub fn delete(&self, endpoint: &str) -> reqwest::RequestBuilder {
+        self.request(reqwest::Method::DELETE, endpoint)
     }
 }

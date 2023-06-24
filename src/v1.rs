@@ -4,17 +4,17 @@ use serde_json::Value;
 use reqwest::Error;
 use async_trait::async_trait;
 
-/// ## Twitter API v2 utility
-/// V2 Trait provides API wrapper for easy handling of Twitter API v2.
+/// ## Twitter API v1.1 utility
+/// V1 Trait provides API wrapper for easy handling of Twitter API v1.1.
 ///
 /// References: [https://developer.twitter.com/en/docs/api-reference-index](https://developer.twitter.com/en/docs/api-reference-index)
 ///
-/// | Twitter API v2 Endpoint | `API` Method            |
-/// | ----------------------- | ----------------------- |
-/// | POST /2/tweets          | `Client.create_tweet()` |
-/// | DELETE /2/tweets        | `Client.delete_tweet()` |
+/// | Twitter API v1.1 Endpoint      | `API` Method            |
+/// | ------------------------------ | ----------------------- |
+/// | POST /1.1/statuses/update.json | `Client.create_tweet()` |
+/// | POST /1.1/statuses/destroy/:id | `Client.delete_tweet()` |
 #[async_trait]
-pub trait V2 {
+pub trait V1 {
     /// Create tweet
     ///
     /// * `text` - tweet content
@@ -28,15 +28,16 @@ pub trait V2 {
 
 
 #[async_trait]
-impl V2 for Client {
+impl V1 for Client {
     async fn create_tweet(&self, text: &str) -> Result<Value, Error>
     {
-        let endpoint = "https://api.twitter.com/2/tweets";
-        let mut body = HashMap::new();
-        body.insert("text", text);
+        let endpoint = "https://api.twitter.com/1.1/statuses/update.json";
+
+        let mut query = HashMap::new();
+        query.insert("status", text);
 
         self.post(endpoint)
-            .json(&body)
+            .query(&query)
             .send()
             .await?
             .json::<Value>()
@@ -45,9 +46,9 @@ impl V2 for Client {
 
     async fn delete_tweet(&self, id: &str) -> Result<Value, Error>
     {
-        let endpoint = format!("https://api.twitter.com/2/tweets/{}", id);
+        let endpoint = format!("https://api.twitter.com/1.1/statuses/destroy/{}.json", id);
 
-        self.delete(&endpoint)
+        self.post(&endpoint)
             .send()
             .await?
             .json::<Value>()
