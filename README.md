@@ -1,6 +1,6 @@
 # tweers
 
-[![Version](https://img.shields.io/badge/version-0.1.0)](https://88IO.github.io/tweers/tweers/)
+[![Version](https://img.shields.io/badge/version-0.1.0-orange)](https://88IO.github.io/tweers/tweers/)
 [![Rust](https://github.com/88IO/tweers/actions/workflows/rust.yml/badge.svg)](https://github.com/88IO/tweers/actions/workflows/rust.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
