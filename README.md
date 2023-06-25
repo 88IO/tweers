@@ -1,4 +1,9 @@
 # tweers
+
+[![Version](https://img.shields.io/badge/version-0.1.0)](https://88IO.github.io/tweers/tweers/)
+[![Rust](https://github.com/88IO/tweers/actions/workflows/rust.yml/badge.svg)](https://github.com/88IO/tweers/actions/workflows/rust.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 An easy-to-use Rust library for accessing the Twitter API.
 
 This library uses Twitter API v2 and OAuth 1.0a and provides REST APIs.
@@ -12,7 +17,7 @@ This library uses Twitter API v2 and OAuth 1.0a and provides REST APIs.
 [https://88IO.github.io/tweers/tweers/](https://88IO.github.io/tweers/tweers/)
 
 ## Example
-This asynchronous example uses [Tokio](https://tokio.rs/) and [dotenv](https://crates.io/crates/dotenv), 
+This asynchronous example uses [Tokio](https://tokio.rs/) and [dotenv](https://crates.io/crates/dotenv),
 so your `Cargo.toml` could look like this:
 
 ```
@@ -74,8 +79,7 @@ async fn main() {
 ## License
 Licensed under either of
 
-- Apache License, Version 2.0 (LICENSE-APACHE or http://apache.org/licenses/LICENSE-2.0)
-- MIT license (LICENSE-MIT or http://opensource.org/licenses/MIT)
+- Apache License, Version 2.0 (LICENSE or http://apache.org/licenses/LICENSE-2.0)
 
 ## Blog
 - [https://scienceboy.jp/88io/2022/01/rust-tweet/](https://scienceboy.jp/88io/2022/01/rust-tweet/)
